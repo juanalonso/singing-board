@@ -46,7 +46,7 @@ const unsigned int *vowels[] = {
 };
 
 const float gains[] = {
-  0.75, 0.56, 0.95, 0.56, 0.40, 0.40
+  0.75, 0.56, 0.75, 0.56, 0.40, 0.40
 };
 
 
@@ -57,25 +57,21 @@ void setup() {
   pinMode(1, INPUT_PULLUP);
   pinMode(2, INPUT_PULLUP);
 
-  //So everything is set at the beggining
-  int a0history = analogRead(A0);
-  float gain = potToGain(a0history);
-
-  int a2history = analogRead(A2);
-  float period = potToPeriod(a2history);
+  float initGain = potToGain(analogRead(A0));
+  float initPeriod = potToPeriod(analogRead(A2));
 
   Serial.begin(115200);
 
   AudioMemory(160);
 
   sgtl5000_1.enable();
-  sgtl5000_1.volume(0.6);
+  sgtl5000_1.volume(initGain);
 
-  mixer1.gain(0, gain); //Main gain
+  mixer1.gain(0, gains[currentVowel]); //Main gain
   mixer1.gain(1, 0);    //Delay gain, controled by button
   mixer1.gain(2, 0);
 
-  delay1.delay(0, period);
+  delay1.delay(0, initPeriod);
 
   delay(1000);
 
@@ -88,7 +84,7 @@ void loop() {
   int a0 = analogRead(A0);
   if (a0 > a0history + 15 || a0 < a0history - 15) {
     float gain = potToGain(a0history);
-    mixer1.gain(0, gain);
+    sgtl5000_1.volume(gain);
     a0history = a0;
   }
 
@@ -117,6 +113,7 @@ void loop() {
     if (currentVowel >= 6) {
       currentVowel = 0;
     }
+    mixer1.gain(0, gains[currentVowel]);
   }
 
 
@@ -135,7 +132,7 @@ float potToPeriod(int potValue) {
 }
 
 float potToGain(int potValue) {
-  float potGain = (float)map(potValue, 0, 1023, 0, 1000) / 1000.0;
+  float potGain = (float)map(potValue, 0, 1023, 0, 800) / 1000.0;
   Serial.print("Gain: ");
   Serial.println(potGain);
   return potGain;
