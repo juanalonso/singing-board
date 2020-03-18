@@ -57,15 +57,18 @@ void setup() {
   pinMode(1, INPUT_PULLUP);
   pinMode(2, INPUT_PULLUP);
 
-  float initGain = potToGain(analogRead(A0));
-  float initPeriod = potToPeriod(analogRead(A2));
+  a0history = analogRead(A0);
+  float initVol = potToGain(a0history);
 
-  Serial.begin(115200);
+  a2history = analogRead(A2);
+  float initPeriod = potToPeriod(a2history);
+
+  Serial.begin(9600);
 
   AudioMemory(160);
 
   sgtl5000_1.enable();
-  sgtl5000_1.volume(initGain);
+  sgtl5000_1.volume(initVol);
 
   mixer1.gain(0, gains[currentVowel]); //Main gain
   mixer1.gain(1, 0);    //Delay gain, controled by button
@@ -101,7 +104,7 @@ void loop() {
 
   if (button0.fallingEdge()) {
     playMem1.play(vowels[currentVowel]);
-    mixer1.gain(1, 0.99);
+    mixer1.gain(1, 0.95);
   }
 
   if (button0.risingEdge()) {
