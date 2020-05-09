@@ -7,3 +7,4 @@ assets/wavs/*.cpp
 assets/wavs/*.h
 assets/wavs/wav2sketch
 assets/wavs/wav2sketch.c
+assets
