@@ -14,25 +14,36 @@ AudioControlSGTL5000     sgtl5000_1;     //xy=79,180
 
 
 
-
 #include <Bounce.h>
 
-#define NUMNOTES   3
+#define NUMNOTES   7
 #define MIDIOFFSET 12
 
 int digitalPins[] = {0, 1, 2, 3, 4, 5, 9, 14, 16, 17, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33};
-int notes[NUMNOTES] = {0, 4, 7};
+int notes[NUMNOTES] = {0, 2, 4, 5, 7, 9, 11};
 
-#define HALL_PIN1  digitalPins[7]
-#define HALL_PIN2  digitalPins[8]
-#define HALL_PIN3  digitalPins[9]
-#define LED_PIN   LED_BUILTIN
+#define NOTE1_PIN   digitalPins[0]
+#define NOTE2_PIN   digitalPins[1]
+#define NOTE3_PIN   digitalPins[2]
+#define NOTE4_PIN   digitalPins[3]
+#define NOTE5_PIN   digitalPins[4]
+#define NOTE6_PIN   digitalPins[5]
+#define NOTE7_PIN   digitalPins[6]
+#define CHANGE_PIN  digitalPins[7]
+#define LED_PIN     LED_BUILTIN
 
 Bounce butNote[NUMNOTES] = {
-  Bounce(HALL_PIN1, 15),
-  Bounce(HALL_PIN2, 15),
-  Bounce(HALL_PIN3, 15)
+  Bounce(NOTE1_PIN, 15),
+  Bounce(NOTE2_PIN, 15),
+  Bounce(NOTE3_PIN, 15),
+  Bounce(NOTE4_PIN, 15),
+  Bounce(NOTE5_PIN, 15),
+  Bounce(NOTE6_PIN, 15),
+  Bounce(NOTE7_PIN, 15)
 };
+
+Bounce butChange = Bounce(CHANGE_PIN, 15);
+
 
 
 void setup() {
@@ -44,8 +55,9 @@ void setup() {
   sgtl5000_1.volume(0.75);
 
   for (int f = 0; f < NUMNOTES; f++) {
-    pinMode(digitalPins[f + 7], INPUT_PULLUP);
+    pinMode(digitalPins[f], INPUT_PULLUP);
   }
+  pinMode(CHANGE_PIN, INPUT_PULLUP);
   pinMode(LED_PIN, OUTPUT);
 
   delay(1000);
@@ -73,6 +85,14 @@ void loop() {
       break;
     }
   }
+
+   butChange.update();
+
+    if (butChange.risingEdge()) {
+    }
+
+    if (butChange.fallingEdge()) {
+    }
 
 }
 
