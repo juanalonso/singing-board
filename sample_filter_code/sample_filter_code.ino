@@ -34,8 +34,8 @@ AudioControlSGTL5000     sgtl5000_1;     //xy=79,180
 // GUItool: end automatically generated code
 
 
-#define NUMNOTES   10
-#define MIDIOFFSET 24
+#define NUMNOTES   6
+#define MIDIOFFSET 0
 
 //CAUTION:
 //These digital pins also work as analog:  14 (A0), 16 (A2), 17 (A3) and 22 (A8).
@@ -47,11 +47,7 @@ Bounce butNote[NUMNOTES] = {
   Bounce(digitalPins[3], 15),
   Bounce(digitalPins[4], 15),
   Bounce(digitalPins[5], 15),
-  Bounce(digitalPins[6], 15),
-  Bounce(digitalPins[7], 15),
-  Bounce(digitalPins[8], 15),
-  Bounce(digitalPins[9], 15),
-  Bounce(digitalPins[10], 15) 
+  Bounce(digitalPins[6], 15)
 };
 
 Bounce butNext = Bounce(digitalPins[0], 15);
@@ -100,7 +96,7 @@ double coef[][5] = {
 void setup() {
 
   for (int f = 0; f < NUMNOTES; f++) {
-    pinMode(digitalPins[f+1], INPUT_PULLUP);
+    pinMode(digitalPins[f + 1], INPUT_PULLUP);
   }
   pinMode(digitalPins[0], INPUT_PULLUP);
 
@@ -112,9 +108,10 @@ void setup() {
   AudioMemory(160);
 
   sgtl5000_1.enable();
-  sgtl5000_1.volume(initVol);
+  //sgtl5000_1.volume(initVol);
+  sgtl5000_1.volume(0.5);
 
-  mix_echo.gain(0, 0.1);
+  mix_echo.gain(0, 0.5);
   mix_echo.gain(1, 0);
 
   //We will probably not need this
@@ -142,7 +139,7 @@ void loop() {
   int a0 = analogRead(A0);
   if (a0 > a0history + 15 || a0 < a0history - 15) {
     float gain = potToGain(a0history);
-    sgtl5000_1.volume(gain);
+    //sgtl5000_1.volume(gain);
     a0history = a0;
   }
 
@@ -151,8 +148,8 @@ void loop() {
 
     butNote[f].update();
 
-    if (butNote[f].fallingEdge()) {
-      mix_echo.gain(1, 0);
+    if (butNote[f].risingEdge()) {
+      mix_echo.gain(1, 0.7);
     }
 
     if (butNote[f].fallingEdge()) {
@@ -162,8 +159,9 @@ void loop() {
       echo.delay(0, period);
 
       //If we get strange results, swithc the following two lines
-      mix_echo.gain(1, 0.99);
       impulse.play(AudioSampleImpulse);
+      mix_echo.gain(1, 0.99);
+
       break;
     }
   }
@@ -180,6 +178,8 @@ void loop() {
     biquad2.setCoefficients(0, coef[currentVowel * 5 + 1]);
     biquad3.setCoefficients(0, coef[currentVowel * 5 + 2]);
     biquad4.setCoefficients(0, coef[currentVowel * 5 + 3]);
+    Serial.print("Current vowel: ");
+    Serial.println(currentVowel);
   }
 
 }
