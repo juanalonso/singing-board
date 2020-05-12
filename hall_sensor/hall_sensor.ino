@@ -20,7 +20,7 @@ AudioControlSGTL5000     sgtl5000_1;     //xy=79,180
 #define MIDIOFFSET 12
 
 int digitalPins[] = {0, 1, 2, 3, 4, 5, 9, 14, 16, 17, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33};
-int notes[NUMNOTES] = {0, 2, 4, 5, 7, 9, 11};
+int notes[NUMNOTES] = {10, 8, 7, 5, 3, 2, 0};
 
 #define NOTE1_PIN   digitalPins[0]
 #define NOTE2_PIN   digitalPins[1]
@@ -78,7 +78,7 @@ void loop() {
 
     if (butNote[f].fallingEdge()) {
 
-      float period = butToHz(MIDIOFFSET+notes[f]);
+      float period = butToHz(MIDIOFFSET + notes[f]);
       string.noteOn(period, 0.75);
 
       digitalWrite(LED_PIN, HIGH);
@@ -86,13 +86,13 @@ void loop() {
     }
   }
 
-   butChange.update();
+  butChange.update();
 
-    if (butChange.risingEdge()) {
-    }
+  if (butChange.risingEdge()) {
+  }
 
-    if (butChange.fallingEdge()) {
-    }
+  if (butChange.fallingEdge()) {
+  }
 
 }
 
