@@ -5,32 +5,43 @@
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioPlayMemory          impulse;       //xy=77.5,80
-AudioMixer4              mix_echo;         //xy=310,100
-AudioEffectDelay         echo;         //xy=310,300
-AudioFilterBiquad        biquad1;        //xy=553.5,100
-AudioFilterBiquad        biquad2;        //xy=553.5,160
-AudioFilterBiquad        biquad3;        //xy=553.5,220
-AudioFilterBiquad        biquad4;        //xy=553.5,280
-AudioMixer4              mix_filter;         //xy=790,120
-AudioOutputI2S           i2s1;           //xy=970,120
-AudioConnection          patchCord1(impulse, 0, mix_echo, 0);
-AudioConnection          patchCord2(mix_echo, echo);
-AudioConnection          patchCord3(mix_echo, biquad1);
-AudioConnection          patchCord4(mix_echo, biquad2);
-AudioConnection          patchCord5(mix_echo, biquad3);
-AudioConnection          patchCord6(mix_echo, biquad4);
-AudioConnection          patchCord7(echo, 0, mix_echo, 1);
+AudioPlayMemory          impulse;        //xy=70,51
+AudioMixer4              mix_delay_impulse; //xy=271,71
+AudioEffectDelay         delay_impulse;  //xy=271,271
+AudioFilterBiquad        biquad1;        //xy=514,71
+AudioFilterBiquad        biquad2;        //xy=514,131
+AudioFilterBiquad        biquad3;        //xy=514,191
+AudioFilterBiquad        biquad4;        //xy=514,251
+AudioMixer4              mix_filter;     //xy=711,90
+AudioEffectChorus        chorus;         //xy=849,90
+AudioEffectFreeverb      reverb;      //xy=960,251
+AudioMixer4              mix_reverb;         //xy=1076,109
+AudioOutputI2S           i2s;            //xy=1260,101
+AudioConnection          patchCord1(impulse, 0, mix_delay_impulse, 0);
+AudioConnection          patchCord2(mix_delay_impulse, delay_impulse);
+AudioConnection          patchCord3(mix_delay_impulse, biquad1);
+AudioConnection          patchCord4(mix_delay_impulse, biquad2);
+AudioConnection          patchCord5(mix_delay_impulse, biquad3);
+AudioConnection          patchCord6(mix_delay_impulse, biquad4);
+AudioConnection          patchCord7(delay_impulse, 0, mix_delay_impulse, 1);
 AudioConnection          patchCord8(biquad1, 0, mix_filter, 0);
 AudioConnection          patchCord9(biquad2, 0, mix_filter, 1);
 AudioConnection          patchCord10(biquad3, 0, mix_filter, 2);
 AudioConnection          patchCord11(biquad4, 0, mix_filter, 3);
-AudioConnection          patchCord12(mix_filter, 0, i2s1, 0);
-AudioConnection          patchCord13(mix_filter, 0, i2s1, 1);
-AudioControlSGTL5000     sgtl5000_1;     //xy=79,180
+AudioConnection          patchCord12(mix_filter, chorus);
+AudioConnection          patchCord13(chorus, 0, mix_reverb, 0);
+AudioConnection          patchCord14(chorus, reverb);
+AudioConnection          patchCord15(reverb, 0, mix_reverb, 1);
+AudioConnection          patchCord16(mix_reverb, 0, i2s, 0);
+AudioConnection          patchCord17(mix_reverb, 0, i2s, 1);
+AudioControlSGTL5000     sgtl5000_1;     //xy=1251,175
 // GUItool: end automatically generated code
 
 
+
+
+#define CHORUS_DELAY_LENGTH (16*AUDIO_BLOCK_SAMPLES)
+short delayline[CHORUS_DELAY_LENGTH];
 
 #include <Bounce.h>
 #include "AudioSampleImpulse.h"
@@ -97,6 +108,7 @@ Bounce butNote[NUMNOTES] = {
 
 Bounce butChange = Bounce(CHANGE_PIN, 15);
 int currentVowel;
+elapsedMillis last_time;
 
 
 
@@ -104,6 +116,7 @@ void setup() {
 
   //Vars init
   currentVowel = 1;
+  last_time = millis();
 
 
   //Serial init
@@ -114,14 +127,22 @@ void setup() {
   AudioMemory(160);
   sgtl5000_1.enable();
   sgtl5000_1.volume(0.5);
-  mix_echo.gain(0, 0.5);
-  mix_echo.gain(1, 0);
+  mix_delay_impulse.gain(0, 0.5);
+  mix_delay_impulse.gain(1, 0);
   setCoeffs(currentVowel);
   mix_filter.gain(0, 0.25);
   mix_filter.gain(1, 0.25);
   mix_filter.gain(2, 0.25);
   mix_filter.gain(3, 0.25);
-
+  if (!chorus.begin(delayline, CHORUS_DELAY_LENGTH, 2)) {
+    Serial.println("AudioEffectChorus - begin failed");
+    while (1);
+  }
+  chorus.voices(0);
+  mix_reverb.gain(0, 0.5); // 50% wet
+  mix_reverb.gain(1, 0.5); // 50% dry
+  reverb.roomsize(0.8);
+  reverb.damping(0.1);
 
   //Hardware init
   for (int f = 0; f < NUMNOTES; f++) {
@@ -143,8 +164,9 @@ void loop() {
     butNote[f].update();
 
     if (butNote[f].risingEdge()) {
-      mix_echo.gain(1, 0.7);
+      mix_delay_impulse.gain(1, 0.7);
       digitalWrite(LED_PIN, LOW);
+      chorus.voices(0);
     }
 
     if (butNote[f].fallingEdge()) {
@@ -154,9 +176,10 @@ void loop() {
       Serial.print("     notes[f]=");
       Serial.println(MIDIOFFSET + notes[f]);
       float period = butToPeriod(MIDIOFFSET + notes[f]);
-      echo.delay(0, period);
-      mix_echo.gain(1, 0.99);
+      delay_impulse.delay(0, period);
+      mix_delay_impulse.gain(1, 0.99);
       impulse.play(AudioSampleImpulse);
+      chorus.voices(2);
 
       digitalWrite(LED_PIN, HIGH);
       break;
@@ -179,18 +202,44 @@ void loop() {
 
   }
 
+  if (last_time > 5000) {
+    Serial.print("Proc = ");
+    Serial.print(AudioProcessorUsage());
+    Serial.print(" (");
+    Serial.print(AudioProcessorUsageMax());
+    Serial.print("),  Mem = ");
+    Serial.print(AudioMemoryUsage());
+    Serial.print(" (");
+    Serial.print(AudioMemoryUsageMax());
+    Serial.println(")");
+    last_time = 0;
+  }
+
 }
 
 
 
 float butToPeriod(float midiVal) {
 
-  float hz = 440.0 * pow(2,(midiVal-69.0)/12.0);
+  float hz = 440.0 * pow(2, (midiVal - 69.0) / 12.0);
   float period = 1000.0 / hz;
 
   Serial.print("Midi: ");
   Serial.print(midiVal);
   Serial.print(" Period: ");
+  Serial.print(hz);
+  Serial.print("Hz / ");
+  Serial.print(period);
+  Serial.println("ms");
+  return period;
+}
+
+
+float potToPeriod(int potValue) {
+  int midi = map(potValue, 0, 1023, 0, 24);
+  float hz = 110.0 * pow(1.059463094359295, midi);
+  float period = 1000.0 / (float)hz;
+  Serial.print("Period: ");
   Serial.print(hz);
   Serial.print("Hz / ");
   Serial.print(period);
