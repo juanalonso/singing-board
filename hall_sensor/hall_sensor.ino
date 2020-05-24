@@ -1,3 +1,7 @@
+#include "synth_pulsetrain.h"
+
+
+
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
