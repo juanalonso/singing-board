@@ -15,11 +15,12 @@ AudioFilterBiquad        biquad2;        //xy=565,158
 AudioFilterBiquad        biquad3;        //xy=565,218
 AudioFilterBiquad        biquad4;        //xy=565,278
 AudioMixer4              mix_filter;     //xy=762,117
+AudioSynthWaveformSine   lfo;          //xy=788,275
 AudioEffectFreeverb      reverb;         //xy=913,215
-AudioSynthWaveformSine   lfo;          //xy=914,273
-AudioSynthWaveformDc     offset;            //xy=914,331
+AudioEffectEnvelope      env_lfo;      //xy=985,275
+AudioSynthWaveformDc     offset;            //xy=987,319
 AudioMixer4              mix_reverb;     //xy=1069,136
-AudioMixer4              mix_lfo;         //xy=1082,292
+AudioMixer4              mix_lfo;         //xy=1165,294
 AudioEffectMultiply      tremolo;      //xy=1261,142
 AudioOutputI2S           i2s;            //xy=1430,142
 AudioConnection          patchCord1(impulse, biquad1);
@@ -32,15 +33,18 @@ AudioConnection          patchCord7(biquad3, 0, mix_filter, 2);
 AudioConnection          patchCord8(biquad4, 0, mix_filter, 3);
 AudioConnection          patchCord9(mix_filter, 0, mix_reverb, 0);
 AudioConnection          patchCord10(mix_filter, reverb);
-AudioConnection          patchCord11(reverb, 0, mix_reverb, 1);
-AudioConnection          patchCord12(lfo, 0, mix_lfo, 0);
-AudioConnection          patchCord13(offset, 0, mix_lfo, 1);
-AudioConnection          patchCord14(mix_reverb, 0, tremolo, 0);
-AudioConnection          patchCord15(mix_lfo, 0, tremolo, 1);
-AudioConnection          patchCord16(tremolo, 0, i2s, 0);
-AudioConnection          patchCord17(tremolo, 0, i2s, 1);
+AudioConnection          patchCord11(lfo, env_lfo);
+AudioConnection          patchCord12(reverb, 0, mix_reverb, 1);
+AudioConnection          patchCord13(env_lfo, 0, mix_lfo, 0);
+AudioConnection          patchCord14(offset, 0, mix_lfo, 1);
+AudioConnection          patchCord15(mix_reverb, 0, tremolo, 0);
+AudioConnection          patchCord16(mix_lfo, 0, tremolo, 1);
+AudioConnection          patchCord17(tremolo, 0, i2s, 0);
+AudioConnection          patchCord18(tremolo, 0, i2s, 1);
 AudioControlSGTL5000     sgtl5000_1;     //xy=1420,218
 // GUItool: end automatically generated code
+
+
 
 
 
@@ -167,6 +171,12 @@ void setup() {
   lfo.amplitude(0.1);
   lfo.frequency(4);
   offset.amplitude(0.5);
+  env_lfo.delay(0);
+  env_lfo.attack(2000);
+  env_lfo.hold(0);
+  env_lfo.decay(100);
+  env_lfo.sustain(1);
+  env_lfo.release(100);
 
 
   //Hardware init
@@ -188,15 +198,19 @@ void loop() {
 
     butNote[f].update();
 
+    //Note OFF
     if (butNote[f].risingEdge()) {
       impulse.amplitude(0);
+      env_lfo.noteOff();
       digitalWrite(LED_PIN, LOW);
     }
 
+    //Note ON
     if (butNote[f].fallingEdge()) {
       float freq = midiToFreq(MIDIOFFSET + notes[f]);
       impulse.frequency(freq);
       impulse.amplitude(1);
+      env_lfo.noteOn();
       digitalWrite(LED_PIN, HIGH);
       break;
     }
