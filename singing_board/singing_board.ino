@@ -115,13 +115,13 @@ double Coefficcients[20][5] = {
 int digitalPins[] = {0, 1, 2, 3, 4, 5, 9, 14, 16, 17, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33};
 float notes[NUMNOTES] = {0, 2, 3, 5, 7, 8, 10};
 
-#define NOTE1_PIN   digitalPins[0]
-#define NOTE2_PIN   digitalPins[1]
-#define NOTE3_PIN   digitalPins[2]
+#define NOTE1_PIN   digitalPins[6]
+#define NOTE2_PIN   digitalPins[5]
+#define NOTE3_PIN   digitalPins[4]
 #define NOTE4_PIN   digitalPins[3]
-#define NOTE5_PIN   digitalPins[4]
-#define NOTE6_PIN   digitalPins[5]
-#define NOTE7_PIN   digitalPins[6]
+#define NOTE5_PIN   digitalPins[2]
+#define NOTE6_PIN   digitalPins[1]
+#define NOTE7_PIN   digitalPins[0]
 #define CHANGE_PIN  digitalPins[7]
 #define LED_PIN     LED_BUILTIN
 
