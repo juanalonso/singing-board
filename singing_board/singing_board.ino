@@ -9,15 +9,19 @@
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioSynthPulsetrain     impulse;        //xy=286,98
+AudioSynthPulsetrain          impulse;        //xy=286,98
 AudioFilterBiquad        biquad1;        //xy=565,98
 AudioFilterBiquad        biquad2;        //xy=565,158
 AudioFilterBiquad        biquad3;        //xy=565,218
 AudioFilterBiquad        biquad4;        //xy=565,278
 AudioMixer4              mix_filter;     //xy=762,117
 AudioEffectFreeverb      reverb;         //xy=913,215
+AudioSynthWaveformSine   lfo;          //xy=914,273
+AudioSynthWaveformDc     offset;            //xy=914,331
 AudioMixer4              mix_reverb;     //xy=1069,136
-AudioOutputI2S           i2s;            //xy=1266,129
+AudioMixer4              mix_lfo;         //xy=1082,292
+AudioEffectMultiply      tremolo;      //xy=1261,142
+AudioOutputI2S           i2s;            //xy=1430,142
 AudioConnection          patchCord1(impulse, biquad1);
 AudioConnection          patchCord2(impulse, biquad2);
 AudioConnection          patchCord3(impulse, biquad3);
@@ -29,10 +33,16 @@ AudioConnection          patchCord8(biquad4, 0, mix_filter, 3);
 AudioConnection          patchCord9(mix_filter, 0, mix_reverb, 0);
 AudioConnection          patchCord10(mix_filter, reverb);
 AudioConnection          patchCord11(reverb, 0, mix_reverb, 1);
-AudioConnection          patchCord12(mix_reverb, 0, i2s, 0);
-AudioConnection          patchCord13(mix_reverb, 0, i2s, 1);
-AudioControlSGTL5000     sgtl5000_1;     //xy=1255,195
+AudioConnection          patchCord12(lfo, 0, mix_lfo, 0);
+AudioConnection          patchCord13(offset, 0, mix_lfo, 1);
+AudioConnection          patchCord14(mix_reverb, 0, tremolo, 0);
+AudioConnection          patchCord15(mix_lfo, 0, tremolo, 1);
+AudioConnection          patchCord16(tremolo, 0, i2s, 0);
+AudioConnection          patchCord17(tremolo, 0, i2s, 1);
+AudioControlSGTL5000     sgtl5000_1;     //xy=1420,218
 // GUItool: end automatically generated code
+
+
 
 
 
@@ -154,6 +164,9 @@ void setup() {
   mix_reverb.gain(1, 0.1); // 10% wet
   reverb.roomsize(0.6);
   reverb.damping(0.4);
+  lfo.amplitude(0.1);
+  lfo.frequency(4);
+  offset.amplitude(0.5);
 
 
   //Hardware init
