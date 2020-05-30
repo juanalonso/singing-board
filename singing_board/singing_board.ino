@@ -1,4 +1,6 @@
 #include "synth_pulsetrain.h"
+#include <Bounce.h>
+
 
 
 
@@ -9,49 +11,44 @@
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioSynthPulsetrain          impulse;        //xy=286,98
-AudioFilterBiquad        biquad1;        //xy=565,98
-AudioFilterBiquad        biquad2;        //xy=565,158
-AudioFilterBiquad        biquad3;        //xy=565,218
-AudioFilterBiquad        biquad4;        //xy=565,278
-AudioMixer4              mix_filter;     //xy=762,117
-AudioSynthWaveformSine   lfo;          //xy=788,275
-AudioEffectFreeverb      reverb;         //xy=913,215
-AudioEffectEnvelope      env_lfo;      //xy=985,275
-AudioSynthWaveformDc     offset;            //xy=987,319
-AudioMixer4              mix_reverb;     //xy=1069,136
-AudioMixer4              mix_lfo;         //xy=1165,294
-AudioEffectMultiply      tremolo;      //xy=1261,142
-AudioOutputI2S           i2s;            //xy=1430,142
-AudioConnection          patchCord1(impulse, biquad1);
-AudioConnection          patchCord2(impulse, biquad2);
-AudioConnection          patchCord3(impulse, biquad3);
-AudioConnection          patchCord4(impulse, biquad4);
-AudioConnection          patchCord5(biquad1, 0, mix_filter, 0);
-AudioConnection          patchCord6(biquad2, 0, mix_filter, 1);
-AudioConnection          patchCord7(biquad3, 0, mix_filter, 2);
-AudioConnection          patchCord8(biquad4, 0, mix_filter, 3);
-AudioConnection          patchCord9(mix_filter, 0, mix_reverb, 0);
-AudioConnection          patchCord10(mix_filter, reverb);
-AudioConnection          patchCord11(lfo, env_lfo);
-AudioConnection          patchCord12(reverb, 0, mix_reverb, 1);
-AudioConnection          patchCord13(env_lfo, 0, mix_lfo, 0);
-AudioConnection          patchCord14(offset, 0, mix_lfo, 1);
-AudioConnection          patchCord15(mix_reverb, 0, tremolo, 0);
+AudioSynthPulsetrain          impulse;       //xy=728.77783203125,230.55556742350262
+AudioEffectEnvelope      env_impulse;      //xy=891.4445190429688,230.4444122314453
+AudioFilterBiquad        biquad1;        //xy=1103.1112060546875,142.22219848632812
+AudioFilterBiquad        biquad2;        //xy=1103.1112060546875,202.22219848632812
+AudioFilterBiquad        biquad3;        //xy=1103.1112060546875,262.2221984863281
+AudioFilterBiquad        biquad4;        //xy=1103.1112060546875,322.2221984863281
+AudioMixer4              mix_filter;     //xy=1290.888916015625,229.9999542236328
+AudioSynthWaveformSine   lfo;            //xy=1318.1111450195312,398.3333435058594
+AudioEffectFreeverb      reverb;         //xy=1470.4444580078125,310.9999694824219
+AudioEffectEnvelope      env_lfo;        //xy=1470.666748046875,399.4444580078125
+AudioSynthWaveformDc     offset;         //xy=1472.666748046875,443.4444580078125
+AudioMixer4              mix_lfo;        //xy=1653.666748046875,418.4444580078125
+AudioMixer4              mix_reverb;     //xy=1661.5557861328125,248.00001525878906
+AudioEffectMultiply      tremolo;        //xy=1832.444580078125,255.11105346679688
+AudioOutputI2S           i2s;            //xy=1985.8890380859375,255.11106872558594
+AudioConnection          patchCord1(impulse, env_impulse);
+AudioConnection          patchCord2(env_impulse, biquad1);
+AudioConnection          patchCord3(env_impulse, biquad2);
+AudioConnection          patchCord4(env_impulse, biquad3);
+AudioConnection          patchCord5(env_impulse, biquad4);
+AudioConnection          patchCord6(biquad1, 0, mix_filter, 0);
+AudioConnection          patchCord7(biquad2, 0, mix_filter, 1);
+AudioConnection          patchCord8(biquad3, 0, mix_filter, 2);
+AudioConnection          patchCord9(biquad4, 0, mix_filter, 3);
+AudioConnection          patchCord10(mix_filter, 0, mix_reverb, 0);
+AudioConnection          patchCord11(mix_filter, reverb);
+AudioConnection          patchCord12(lfo, env_lfo);
+AudioConnection          patchCord13(reverb, 0, mix_reverb, 1);
+AudioConnection          patchCord14(env_lfo, 0, mix_lfo, 0);
+AudioConnection          patchCord15(offset, 0, mix_lfo, 1);
 AudioConnection          patchCord16(mix_lfo, 0, tremolo, 1);
-AudioConnection          patchCord17(tremolo, 0, i2s, 0);
-AudioConnection          patchCord18(tremolo, 0, i2s, 1);
-AudioControlSGTL5000     sgtl5000_1;     //xy=1420,218
+AudioConnection          patchCord17(mix_reverb, 0, tremolo, 0);
+AudioConnection          patchCord18(tremolo, 0, i2s, 0);
+AudioConnection          patchCord19(tremolo, 0, i2s, 1);
+AudioControlSGTL5000     sgtl5000_1;     //xy=1976.6668395996094,409.99993896484375
 // GUItool: end automatically generated code
 
 
-
-
-
-
-
-
-#include <Bounce.h>
 
 
 //OLIVIA
@@ -174,9 +171,11 @@ void setup() {
   env_lfo.delay(0);
   env_lfo.attack(2000);
   env_lfo.hold(0);
-  env_lfo.decay(100);
+  env_lfo.decay(0);
   env_lfo.sustain(1);
   env_lfo.release(100);
+  env_impulse.attack(15);
+  env_impulse.release(150);
 
 
   //Hardware init
@@ -200,7 +199,7 @@ void loop() {
 
     //Note OFF
     if (butNote[f].risingEdge()) {
-      impulse.amplitude(0);
+      env_impulse.noteOff();
       env_lfo.noteOff();
       digitalWrite(LED_PIN, LOW);
     }
@@ -211,6 +210,7 @@ void loop() {
       impulse.frequency(freq);
       impulse.amplitude(1);
       env_lfo.noteOn();
+      env_impulse.noteOn();
       digitalWrite(LED_PIN, HIGH);
       break;
     }
